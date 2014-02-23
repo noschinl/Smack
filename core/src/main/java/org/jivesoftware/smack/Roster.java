@@ -66,7 +66,7 @@ public class Roster {
     private final RosterStore rosterStore;
     private final Map<String, RosterGroup> groups;
     private final Map<String,RosterEntry> entries;
-    private final List<RosterEntry> unfiledEntries;
+    private final Set<RosterEntry> unfiledEntries;
     private final List<RosterListener> rosterListeners;
     private Map<String, Map<String, Presence>> presenceMap;
     // The roster is marked as initialized when at least a single roster packet
@@ -109,7 +109,7 @@ public class Roster {
         this.connection = connection;
         rosterStore = connection.getConfiguration().getRosterStore();
         groups = new ConcurrentHashMap<String, RosterGroup>();
-        unfiledEntries = new CopyOnWriteArrayList<RosterEntry>();
+        unfiledEntries = Collections.newSetFromMap(new ConcurrentHashMap<RosterEntry, Boolean>());
         entries = new ConcurrentHashMap<String,RosterEntry>();
         rosterListeners = new CopyOnWriteArrayList<RosterListener>();
         presenceMap = new ConcurrentHashMap<String, Map<String, Presence>>();
@@ -369,7 +369,7 @@ public class Roster {
      * @return the unfiled roster entries.
      */
     public Collection<RosterEntry> getUnfiledEntries() {
-        return Collections.unmodifiableList(unfiledEntries);
+        return Collections.unmodifiableSet(unfiledEntries);
     }
 
     /**
@@ -668,9 +668,7 @@ public class Roster {
 
         // Mark the entry as unfiled if it does not belong to any groups.
         if (item.getGroupNames().isEmpty()) {
-            if (!unfiledEntries.contains(entry)) {
-                unfiledEntries.add(entry);
-            }
+            unfiledEntries.add(entry);
         }
         else {
             unfiledEntries.remove(entry);
