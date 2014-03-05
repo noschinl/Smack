@@ -401,43 +401,27 @@ public class StringUtils {
     }
 
     /**
-     * Used by the hash method.
-     */
-    private static MessageDigest digest = null;
-
-    /**
      * Hashes a String using the SHA-1 algorithm and returns the result as a
-     * String of hexadecimal numbers. This method is synchronized to avoid
-     * excessive MessageDigest object creation. If calling this method becomes
-     * a bottleneck in your code, you may wish to maintain a pool of
-     * MessageDigest objects instead of using this method.
-     * <p>
-     * A hash is a one-way function -- that is, given an
-     * input, an output is easily computed. However, given the output, the
-     * input is almost impossible to compute. This is useful for passwords
-     * since we can store the hash and a hacker will then have a very hard time
-     * determining the original password.
+     * String of hexadecimal numbers.
      *
+     * Returns null if either the SHA-1 algorithm is not available or the data String cannot be encoded in UTF-8.
      * @param data the String to compute the hash of.
      * @return a hashed version of the passed-in String
      */
-    public synchronized static String hash(String data) {
-        if (digest == null) {
-            try {
-                digest = MessageDigest.getInstance("SHA-1");
-            }
-            catch (NoSuchAlgorithmException nsae) {
-                LOGGER.log(Level.SEVERE, "Failed to load the SHA-1 MessageDigest. Smack will be unable to function normally.", nsae);
-            }
-        }
-        // Now, compute hash.
+    public static String hash(String data) {
+        MessageDigest digest;
         try {
+            digest = MessageDigest.getInstance("SHA-1");
             digest.update(data.getBytes("UTF-8"));
+            return encodeHex(digest.digest());
+        }
+        catch (NoSuchAlgorithmException nsae) {
+            LOGGER.log(Level.SEVERE, "Failed to load the SHA-1 MessageDigest. Smack will be unable to function normally.", nsae);
         }
         catch (UnsupportedEncodingException e) {
             LOGGER.log(Level.SEVERE, "Error computing hash", e);
         }
-        return encodeHex(digest.digest());
+        return null;
     }
 
     /**
